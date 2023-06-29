@@ -25,6 +25,13 @@ while True:
         if event.type == pygame.MOUSEMOTION:
             if player_rect.collidepoint(event.pos): print("collision")
             
+    # test movement
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a]:
+        player_rect.x -= 5
+    if keys[pygame.K_d]:
+        player_rect.x += 5
+    
     screen.blit(sky_surface, (0, 0))
     screen.blit(ground_surface, (0, 300))
     screen.blit(score_surface, score_rect)
