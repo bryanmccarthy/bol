@@ -9,8 +9,8 @@ game_active = False
 sky_surface = pygame.image.load('graphics/Sky.png').convert()
 ground_surface = pygame.image.load('graphics/Ground.png').convert()
 
-score_surface = text_font.render('bol', False, 'Black')
-score_rect = score_surface.get_rect(center = (400, 50))
+restart_surface = text_font.render('SPACE to restart', False, 'White')
+restart_rect = restart_surface.get_rect(center = (400, 50))
 
 snail_surface = pygame.image.load('graphics/snail/Snail1.png').convert_alpha()
 snail_rect = snail_surface.get_rect(midbottom = (600, 300))
@@ -18,6 +18,14 @@ snail_rect = snail_surface.get_rect(midbottom = (600, 300))
 player_surface = pygame.image.load('graphics/player/player_walk_1.png').convert_alpha()
 player_rect = player_surface.get_rect(midbottom = (80, 300))
 player_gravity = 0
+
+start_time = 0
+
+def display_score():
+    current_time = int(pygame.time.get_ticks() / 1000) - start_time
+    score_surface = text_font.render(f"{current_time}", False, (64, 64, 64))
+    score_rect = score_surface.get_rect(center = (400, 50))
+    screen.blit(score_surface, score_rect)
 
 while True:
     for event in pygame.event.get():
@@ -30,10 +38,11 @@ while True:
                     player_gravity = -16
         else:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
+                if event.key == pygame.K_SPACE:
                     game_active = True
                     snail_rect.left = 800 
                     player_rect.left = 50
+                    start_time = int(pygame.time.get_ticks() / 1000)
 
     if game_active:
         keys = pygame.key.get_pressed()
@@ -44,7 +53,7 @@ while True:
                     
         screen.blit(sky_surface, (0, 0))
         screen.blit(ground_surface, (0, 300))
-        screen.blit(score_surface, score_rect)
+        display_score()
 
         # Snail
         snail_rect.x -= 4 
@@ -64,6 +73,7 @@ while True:
         #    print(pygame.mouse.get_pressed())
     else:
         screen.fill("Black")
+        screen.blit(restart_surface, restart_rect)
         
 
     pygame.display.update()
