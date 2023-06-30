@@ -19,10 +19,26 @@ play_rect = play_surface.get_rect(center = (400, 350))
 
 # Enemies
 enemies = []
-snail_surface = pygame.image.load('graphics/snail/Snail1.png').convert_alpha()
-fly_surface = pygame.image.load('graphics/fly/fly1.png').convert_alpha()
 
-player_surface = pygame.image.load('graphics/player/player_walk_1.png').convert_alpha()
+snail_frame_1 = pygame.image.load('graphics/snail/Snail1.png').convert_alpha()
+snail_frame_2 = pygame.image.load('graphics/snail/Snail2.png').convert_alpha()
+snail_frames = [snail_frame_1, snail_frame_2]
+snail_frame_index = 0
+snail_surface = snail_frames[snail_frame_index]
+
+fly_frame_1 = pygame.image.load('graphics/fly/fly1.png').convert_alpha()
+fly_frame_2 = pygame.image.load('graphics/fly/fly2.png').convert_alpha()
+fly_frames = [fly_frame_1, fly_frame_2]
+fly_frame_index = 0
+fly_surface = fly_frames[fly_frame_index]
+
+player_walk_1 = pygame.image.load('graphics/player/player_walk_1.png').convert_alpha()
+player_walk_2 = pygame.image.load('graphics/player/player_walk_2.png').convert_alpha()
+player_walk = [player_walk_1, player_walk_2]
+player_index = 0
+player_jump = pygame.image.load('graphics/player/jump.png').convert_alpha()
+
+player_surface = player_walk[player_index]
 player_rect = player_surface.get_rect(midbottom = (80, 300))
 player_gravity = 0
 
@@ -33,9 +49,15 @@ player_stand_rect = player_stand.get_rect(center = (400, 200))
 
 start_time = 0
 
-# Timer
+# Timers
 enemy_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(enemy_timer, 1000)
+
+snail_animation_timer = pygame.USEREVENT + 2
+pygame.time.set_timer(snail_animation_timer, 500)
+
+fly_animation_timer = pygame.USEREVENT + 3
+pygame.time.set_timer(fly_animation_timer, 250)
 
 def display_score():
     current_time = int(pygame.time.get_ticks() / 1000) - start_time
@@ -68,6 +90,16 @@ def collisions(player, enemies):
                 return False
 
     return True
+
+def player_animation():
+    global player_surface, player_index
+
+    if player_rect.bottom < 300:
+        player_surface = player_jump
+    else:
+        player_index += 0.1
+        if player_index >= 2: player_index  = 0
+        player_surface = player_walk[int(player_index)]
     
 while True:
     for event in pygame.event.get():
@@ -84,6 +116,14 @@ while True:
                     enemies.append(snail_surface.get_rect(midbottom = (randint(900, 1100), 300)))
                 else:
                     enemies.append(fly_surface.get_rect(midbottom = (randint(900, 1100), 180)))
+
+            if event.type == snail_animation_timer:
+                snail_frame_index = 1 if snail_frame_index == 0 else 0
+                snail_surface = snail_frames[snail_frame_index]
+
+            if event.type == fly_animation_timer:
+                fly_frame_index = 1 if fly_frame_index == 0 else 0
+                fly_surface = fly_frames[fly_frame_index]
         else:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
@@ -106,6 +146,7 @@ while True:
         player_gravity += 1
         player_rect.y += player_gravity
         if player_rect.bottom >= 300: player_rect.bottom = 300
+        player_animation()
         screen.blit(player_surface, player_rect)
 
         # Enemy movement
