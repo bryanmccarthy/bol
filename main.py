@@ -12,6 +12,8 @@ class Player(pygame.sprite.Sprite):
         self.image = self.player_walk[self.player_index]
         self.rect = self.image.get_rect(midbottom = (80, 300))
         self.gravity = 0
+        self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
+        self.jump_sound.set_volume(0.5)
 
     def player_input(self):
         keys = pygame.key.get_pressed()
@@ -21,6 +23,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.x += 8
         if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
             self.gravity = -16
+            self.jump_sound.play()
 
     def apply_gravity(self):
         self.gravity += 1
@@ -88,40 +91,18 @@ game_title = text_font.render('Bol', False, 'White')
 game_title_rect = game_title.get_rect(center = (400, 50))
 play_surface = text_font.render('SPACE to play', False, 'White')
 play_rect = play_surface.get_rect(center = (400, 350))
+bg_music = pygame.mixer.Sound('audio/music.wav')
+bg_music.set_volume(0.5)
 
 # Player 
 player = pygame.sprite.GroupSingle()
 player.add(Player())
 
-# Enemy
-enemy_group = pygame.sprite.Group()
-
 # Enemies
+enemy_group = pygame.sprite.Group()
 enemies = []
 
-# Load Sprites
-snail_frame_1 = pygame.image.load('graphics/snail/Snail1.png').convert_alpha()
-snail_frame_2 = pygame.image.load('graphics/snail/Snail2.png').convert_alpha()
-snail_frames = [snail_frame_1, snail_frame_2]
-snail_frame_index = 0
-snail_surface = snail_frames[snail_frame_index]
-
-fly_frame_1 = pygame.image.load('graphics/fly/fly1.png').convert_alpha()
-fly_frame_2 = pygame.image.load('graphics/fly/fly2.png').convert_alpha()
-fly_frames = [fly_frame_1, fly_frame_2]
-fly_frame_index = 0
-fly_surface = fly_frames[fly_frame_index]
-
-player_walk_1 = pygame.image.load('graphics/player/player_walk_1.png').convert_alpha()
-player_walk_2 = pygame.image.load('graphics/player/player_walk_2.png').convert_alpha()
-player_walk = [player_walk_1, player_walk_2]
-player_index = 0
-player_jump = pygame.image.load('graphics/player/jump.png').convert_alpha()
-
-player_surface = player_walk[player_index]
-player_rect = player_surface.get_rect(midbottom = (80, 300))
-player_gravity = 0
-
+# Game inactive screen player
 player_stand = pygame.image.load('graphics/player/player_stand.png').convert_alpha()
 player_stand = pygame.transform.scale_by(player_stand, 2.5)
 player_stand_rect = player_stand.get_rect(center = (400, 200))
@@ -129,10 +110,8 @@ player_stand_rect = player_stand.get_rect(center = (400, 200))
 # Timers
 enemy_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(enemy_timer, 1000)
-
 snail_animation_timer = pygame.USEREVENT + 2
 pygame.time.set_timer(snail_animation_timer, 500)
-
 fly_animation_timer = pygame.USEREVENT + 3
 pygame.time.set_timer(fly_animation_timer, 250)
 
@@ -142,18 +121,6 @@ def display_score():
     score_rect = score_surface.get_rect(center = (400, 50))
     screen.blit(score_surface, score_rect)
     return current_time
-
-def enemy_movement(enemies):
-    if enemies:
-        for enemy_rect in enemies:
-            enemy_rect.x -= 5
-            if enemy_rect.bottom == 300:
-                screen.blit(snail_surface, enemy_rect)
-            else:
-                screen.blit(fly_surface, enemy_rect)
-        enemies = [enemy for enemy in enemies if enemy.x > -50]
-        return enemies
-    return []
 
 def collisions(player, enemies):
     if enemies:
@@ -168,16 +135,6 @@ def collision_sprite():
         return False
     return True
 
-def player_animation():
-    global player_surface, player_index
-
-    if player_rect.bottom < 300:
-        player_surface = player_jump
-    else:
-        player_index += 0.1
-        if player_index >= 2: player_index  = 0
-        player_surface = player_walk[int(player_index)]
-    
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -186,17 +143,11 @@ while True:
         if game_active:
             if event.type == enemy_timer:
                 enemy_group.add(Enemy(choice(['fly', 'snail', 'snail'])))
-            if event.type == snail_animation_timer:
-                snail_frame_index = 1 if snail_frame_index == 0 else 0
-                snail_surface = snail_frames[snail_frame_index]
-            if event.type == fly_animation_timer:
-                fly_frame_index = 1 if fly_frame_index == 0 else 0
-                fly_surface = fly_frames[fly_frame_index]
         else:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     game_active = True
-                    player_rect.left = 50
+                    bg_music.play(loops = -1)
                     start_time = int(pygame.time.get_ticks() / 1000)
 
     if game_active:
@@ -216,9 +167,10 @@ while True:
         # Collisions
         game_active = collision_sprite()
     else:
-        # Game inactive state
+        player.sprite.rect.x = 80
         enemies.clear()
         player_gravity = 0
+        bg_music.stop()
         screen.fill((92, 129, 162))
         screen.blit(play_surface, play_rect)
         screen.blit(player_stand, player_stand_rect)
